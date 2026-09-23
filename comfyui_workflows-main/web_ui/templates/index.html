@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>故事视频生成流水线 - Web UI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --dark: #1e1e2e;
+            --light: #f8fafc;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px 16px 0 0 !important;
+            padding: 16px 20px;
+        }
+
+        .card-body {
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        h2, h3, h4, h5, h6 {
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        h2 { font-size: 1.5rem; }
+        h5 { font-size: 1.1rem; }
+        h6 { font-size: 0.95rem; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--text-muted);
+        }
+
+        .btn-outline-secondary:hover,
+        .btn-outline-secondary.active {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            border-color: var(--primary);
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-connected {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-disconnected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-running {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-completed {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .preview-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            background: var(--bg-card);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .preview-card:hover {
+            transform: scale(1.02);
+            border-color: var(--primary);
+        }
+
+        .preview-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .preview-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            border: 1px dashed rgba(99, 102, 241, 0.2);
+        }
+
+        .preview-placeholder i {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            opacity: 0.6;
+        }
+
+        .param-required {
+            color: #f87171;
+        }
+
+        .param-optional {
+            color: #4ade80;
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+            gap: 4px;
+        }
+
+        .nav-tabs .nav-item {
+            margin-bottom: 0;
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            background: transparent;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .nav-tabs .nav-link.active {
+            color: white;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-check-label {
+            color: var(--text-primary);
+        }
+
+        .help-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .function-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(99, 102, 241, 0.15);
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+
+        .function-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+        }
+
+        .function-card.selected {
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .function-card .card-body {
+            padding: 16px;
+            text-align: center;
+        }
+
+        .function-card .fw-bold {
+            color: var(--text-primary);
+        }
+
+        .queue-info {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .queue-info i {
+            opacity: 0.7;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: 2px;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            background: var(--bg-card);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            border-color: var(--primary);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .gallery-item.selected {
+            outline: 3px solid var(--success);
+            outline-offset: 2px;
+        }
+
+        .gallery-item .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+            padding: 8px 10px;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .shot-sequence {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding: 16px 0;
+        }
+
+        .shot-sequence::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .shot-sequence::-webkit-scrollbar-track {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 4px;
+        }
+
+        .shot-sequence::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+        }
+
+        .shot-item {
+            flex: 0 0 180px;
+            background: var(--bg-card);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 12px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .shot-item:hover {
+            border-color: var(--primary);
+        }
+
+        .shot-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .param-group {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .param-group-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .param-group-title i {
+            opacity: 0.8;
+        }
+
+        .text-secondary {
+            color: var(--text-secondary) !important;
+        }
+
+        .badge {
+            font-weight: 500;
+        }
+
+        .badge.bg-primary {
+            background: var(--primary) !important;
+        }
+
+        .badge.bg-info {
+            background: var(--info) !important;
+        }
+
+        .badge.bg-warning {
+            background: var(--warning) !important;
+            color: #1a1a2e !important;
+        }
+
+        .list-group-item {
+            background: transparent;
+            border-color: rgba(99, 102, 241, 0.1);
+            color: var(--text-primary);
+        }
+
+        .list-group-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .text-truncate {
+            color: var(--text-muted);
+        }
+
+        pre, #logContent {
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #logContent {
+            border-radius: 0 0 16px 16px;
+            color: var(--text-secondary);
+        }
+
+        .text-primary {
+            color: var(--primary) !important;
+        }
+
+        .text-info {
+            color: var(--info) !important;
+        }
+
+        /* 调整列布局 */
+        .col-lg-5 {
+            color: var(--text-primary);
+        }
+
+        .col-lg-7 {
+            color: var(--text-primary);
+        }
+
+        /* Header 样式优化 */
+        .d-flex.justify-content-between.align-items-center.mb-4 {
+            padding: 16px 0;
+        }
+
+        /* 下拉框箭头颜色 */
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        }
+
+        /* Range 滑块样式 */
+        .form-range::-webkit-slider-thumb {
+            background: var(--primary);
+        }
+
+        .form-range::-webkit-slider-runnable-track {
+            background: rgba(99, 102, 241, 0.3);
+        }
+
+        /* Tab 内容区 */
+        .tab-content {
+            padding-top: 16px;
+        }
+
+        /* 分镜模板卡片 */
+        .col-4 .p-2 {
+            background: rgba(99, 102, 241, 0.1) !important;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            color: var(--text-primary);
+        }
+
+        /* 工作流结构展示 */
+        .p-3[style*="monospace"] {
+            background: rgba(0, 0, 0, 0.4) !important;
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            color: var(--text-secondary);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 992px) {
+            .col-lg-5, .col-lg-7 {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1"><i class="bi bi-film"></i> 故事视频生成流水线</h2>
+                <p class="text-secondary mb-0" style="font-size: 0.9rem;">ComfyUI WanVideo 2.2 I2V + CLIP Vision Reference</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="queue-info">
+                    <i class="bi bi-play-circle"></i> 运行中: <span id="queueRunning">0</span>
+                    <i class="bi bi-hourglass-split ms-2"></i> 等待: <span id="queuePending">0</span>
+                </div>
+                <div id="comfyuiStatus" class="status-badge status-disconnected">
+                    <i class="bi bi-cloud"></i> ComfyUI 未连接
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column: Parameters -->
+            <div class="col-lg-5">
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-parameters">
+                            <i class="bi bi-sliders"></i> 参数配置
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-templates">
+                            <i class="bi bi-grid-3x3"></i> 模板预览
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-projects">
+                            <i class="bi bi-folder"></i> 项目
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- Parameters Tab -->
+                    <div class="tab-pane fade show active" id="tab-parameters">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-gear"></i> 生成参数</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- 故事描述 (必须) -->
+                                <div class="param-group">
+                                    <div class="param-group-title">
+                                        <span class="param-required">*</span> 故事描述
+                                    </div>
+                                    <textarea id="description" class="form-control" rows="3" 
+                                        placeholder="例如: 一个男孩在森林里遇到了一只白狐，于是拿出自己背包里的酱板鸭送给了它"></textarea>
+                                    <div class="help-text">描述故事的主要情节，包括主角、场景和关键事件</div>
+                                </div>
+
+                                <!-- 可选参数 -->
+                                <div class="param-group">
+                                    <div class="param-group-title">
+                                        <i class="bi bi-check-circle"></i> 可选参数
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <label class="form-label">定妆照数量</label>
+                                            <input type="number" id="numCostumes" class="form-control" value="3" min="1" max="6">
+                                            <div class="help-text">生成的定妆照变体数量</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">分镜数量</label>
+                                            <input type="number" id="numShots" class="form-control" value="3" min="1" max="6">
+                                            <div class="help-text">分镜图/视频的数量</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check mt-3">
+                                        <input class="form-check-input" type="checkbox" id="useReference" checked>
+                                        <label class="form-check-label" for="useReference">
+                                            使用 CLIP Vision 参考
+                                        </label>
+                                        <div class="help-text">使用定妆照作为参考，保持角色一致性</div>
+                                    </div>
+                                </div>
+
+                                <!-- 高级参数 -->
+                                <div class="param-group">
+                                    <div class="param-group-title">
+                                        <i class="bi bi-tools"></i> 高级参数
+                                    </div>
+                                    
+                                    <div class="row g-3">
+                                        <div class="col-4">
+                                            <label class="form-label">随机种子</label>
+                                            <input type="number" id="seed" class="form-control" value="-1">
+                                            <div class="help-text">-1 表示随机</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="form-label">视频帧数</label>
+                                            <input type="number" id="length" class="form-control" value="81" min="17" max="161" step="16">
+                                            <div class="help-text">17-161</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <label class="form-label">采样步数</label>
+                                            <input type="number" id="steps" class="form-control" value="40" min="10" max="100">
+                                            <div class="help-text">10-100</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <label class="form-label">CFG 强度</label>
+                                        <input type="range" id="cfg" class="form-range" min="1" max="15" step="0.5" value="7">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="help-text">1</span>
+                                            <span id="cfgValue" class="help-text">7.0</span>
+                                            <span class="help-text">15</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 功能选择 -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-lightning"></i> 执行功能</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="card function-card" data-function="generate_costume">
+                                            <div class="card-body text-center py-3">
+                                                <i class="bi bi-person-badge" style="font-size: 2rem; color: var(--primary);"></i>
+                                                <div class="mt-2 fw-bold">生成定妆照</div>
+                                                <div class="help-text">Step 1</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="card function-card" data-function="generate_storyboard">
+                                            <div class="card-body text-center py-3">
+                                                <i class="bi bi-grid-3x3" style="font-size: 2rem; color: var(--info);"></i>
+                                                <div class="mt-2 fw-bold">生成分镜图</div>
+                                                <div class="help-text">Step 2</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="card function-card" data-function="generate_videos">
+                                            <div class="card-body text-center py-3">
+                                                <i class="bi bi-film" style="font-size: 2rem; color: var(--warning);"></i>
+                                                <div class="mt-2 fw-bold">生成分镜视频</div>
+                                                <div class="help-text">Step 3</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="card function-card selected" data-function="generate_all">
+                                            <div class="card-body text-center py-3">
+                                                <i class="bi bi-rocket-takeoff" style="font-size: 2rem; color: var(--success);"></i>
+                                                <div class="mt-2 fw-bold">一键生成全部</div>
+                                                <div class="help-text">完整流程</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button id="btnExecute" class="btn btn-success w-100 mt-3">
+                                    <i class="bi bi-play-fill"></i> 开始生成
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Templates Tab -->
+                    <div class="tab-pane fade" id="tab-templates">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-grid-3x3"></i> 模板预览</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- 角色模板 -->
+                                <h6 class="text-secondary mb-3"><i class="bi bi-people"></i> 角色模板</h6>
+                                <div id="characterTemplates" class="mb-4">
+                                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                                </div>
+
+                                <!-- 分镜模板 -->
+                                <h6 class="text-secondary mb-3"><i class="bi bi-collection"></i> 分镜模板</h6>
+                                <div id="shotTemplates" class="row g-2">
+                                    <div class="col-4">
+                                        <div class="p-2 text-center" style="background: rgba(99,102,241,0.1); border-radius: 8px;">
+                                            <div class="fw-bold">1. 环境建立</div>
+                                            <div class="help-text">establishing</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 text-center" style="background: rgba(139,92,246,0.1); border-radius: 8px;">
+                                            <div class="fw-bold">2. 发现</div>
+                                            <div class="help-text">discovery</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 text-center" style="background: rgba(6,182,212,0.1); border-radius: 8px;">
+                                            <div class="fw-bold">3. 靠近</div>
+                                            <div class="help-text">approach</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 text-center" style="background: rgba(245,158,11,0.1); border-radius: 8px;">
+                                            <div class="fw-bold">4. 赠送</div>
+                                            <div class="help-text">offering</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 text-center" style="background: rgba(34,197,94,0.1); border-radius: 8px;">
+                                            <div class="fw-bold">5. 接受</div>
+                                            <div class="help-text">acceptance</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 text-center" style="background: rgba(239,68,68,0.1); border-radius: 8px;">
+                                            <div class="fw-bold">6. 建立友谊</div>
+                                            <div class="help-text">bonding</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 工作流结构 -->
+                                <h6 class="text-secondary mt-4 mb-3"><i class="bi bi-diagram-3"></i> 工作流结构</h6>
+                                <div class="p-3" style="background: rgba(15,15,25,0.5); border-radius: 8px; font-family: monospace; font-size: 0.85rem;">
+                                    <div class="text-primary">┌─ Step 1: 定妆照生成</div>
+                                    <div class="text-secondary ps-3">└─ 文生图.json (TXT2IMG)</div>
+                                    <div class="text-primary mt-2">┌─ Step 2: 分镜图生成</div>
+                                    <div class="text-secondary ps-3">└─ 文生图.json (TXT2IMG)</div>
+                                    <div class="text-primary mt-2">┌─ Step 3: 分镜视频生成</div>
+                                    <div class="text-secondary ps-3">└─ shot1_i2v_reference.json (I2V + CLIP Vision)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Projects Tab -->
+                    <div class="tab-pane fade" id="tab-projects">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="bi bi-folder"></i> 项目列表</h5>
+                                <button class="btn btn-sm btn-primary" onclick="createProject()">
+                                    <i class="bi bi-plus"></i> 新建项目
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="projectList" class="list-group list-group-flush">
+                                    <div class="text-center text-secondary py-4">
+                                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                        <div class="mt-2">暂无项目</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Preview -->
+            <div class="col-lg-7">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-eye"></i> 预览输出</h5>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary active" data-view="pipeline">
+                                流水线视图
+                            </button>
+                            <button class="btn btn-outline-secondary" data-view="gallery">
+                                画廊视图
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Pipeline View -->
+                        <div id="viewPipeline">
+                            <!-- Step 1: 定妆照 -->
+                            <div class="mb-4">
+                                <h6 class="d-flex align-items-center gap-2 mb-3">
+                                    <span class="badge bg-primary rounded-circle">1</span>
+                                    定妆照生成
+                                    <span id="statusCostume" class="status-badge status-disconnected ms-auto">等待</span>
+                                </h6>
+                                <div id="previewCostume" class="image-gallery">
+                                    <div class="preview-placeholder">
+                                        <i class="bi bi-image"></i> 等待生成
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: 分镜图 -->
+                            <div class="mb-4">
+                                <h6 class="d-flex align-items-center gap-2 mb-3">
+                                    <span class="badge bg-info rounded-circle">2</span>
+                                    分镜图生成
+                                    <span id="statusStoryboard" class="status-badge status-disconnected ms-auto">等待</span>
+                                </h6>
+                                <div class="shot-sequence" id="previewStoryboard">
+                                    <div class="preview-placeholder" style="flex: 0 0 200px;">
+                                        <i class="bi bi-grid-3x3"></i> 等待生成
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3: 分镜视频 -->
+                            <div class="mb-4">
+                                <h6 class="d-flex align-items-center gap-2 mb-3">
+                                    <span class="badge bg-warning rounded-circle">3</span>
+                                    分镜视频生成
+                                    <span id="statusVideo" class="status-badge status-disconnected ms-auto">等待</span>
+                                </h6>
+                                <div id="previewVideo" class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="preview-placeholder">
+                                            <i class="bi bi-film"></i> 等待生成
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gallery View -->
+                        <div id="viewGallery" style="display: none;">
+                            <div class="image-gallery" id="galleryContent">
+                                <!-- 动态内容 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 日志 -->
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-terminal"></i> 生成日志</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="$('#logContent').html('')">
+                            清空
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre id="logContent" style="max-height: 200px; overflow-y: auto; font-size: 0.8rem; margin: 0; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 0 0 16px 16px;">
+                            <span class="text-secondary">等待生成任务...</span>
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+        <div class="modal fade" id="imageModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content" style="background: var(--bg-card); border: 1px solid rgba(99,102,241,0.2);">
+                    <div class="modal-header" style="border-bottom: 1px solid rgba(99,102,241,0.15);">
+                        <h5 class="modal-title" id="imageModalTitle" style="color: var(--text-primary);">
+                            <i class="bi bi-image"></i> <span id="imageModalSubject"></span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center p-0" style="background: rgba(0,0,0,0.3);">
+                        <img id="imageModalImg" src="" alt="" style="max-width: 100%; max-height: 75vh; object-fit: contain;">
+                    </div>
+                    <div class="modal-footer justify-content-between" style="border-top: 1px solid rgba(99,102,241,0.15);">
+                        <div>
+                            <span id="imageModalInfo" style="color: var(--text-secondary); font-size: 0.85rem;"></span>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="rotateImage(-90)">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="rotateImage(90)">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="openInNewTab()">
+                                <i class="bi bi-box-arrow-up-right"></i> 新标签页打开
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        let currentImageSrc = '';
+        let currentImageRotation = 0;
+
+        // 双击图片放大查看
+        function openImageModal(src, subject, index, total) {
+            currentImageSrc = src;
+            currentImageRotation = 0;
+
+            document.getElementById('imageModalSubject').textContent = subject || '定妆照';
+            document.getElementById('imageModalImg').src = src;
+            document.getElementById('imageModalImg').style.transform = 'rotate(0deg)';
+            document.getElementById('imageModalInfo').textContent = `第 ${index + 1} 张 / 共 ${total} 张`;
+
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        }
+
+        // 旋转图片
+        function rotateImage(degrees) {
+            currentImageRotation += degrees;
+            const img = document.getElementById('imageModalImg');
+            img.style.transform = `rotate(${currentImageRotation}deg)`;
+        }
+
+        // 在新标签页打开
+        function openInNewTab() {
+            window.open(currentImageSrc, '_blank');
+        }
+
+        // 全局状态
+        let currentProject = null;
+        let selectedFunction = 'generate_all';
+        let pollingInterval = null;
+
+        // 事件委托：双击图片放大
+        document.addEventListener('dblclick', function(e) {
+            const galleryItem = e.target.closest('.gallery-item');
+            if (galleryItem) {
+                const img = galleryItem.querySelector('img');
+                const subject = galleryItem.dataset.subject || '定妆照';
+                const index = parseInt(galleryItem.dataset.index) || 0;
+                const total = galleryItem.parentElement.querySelectorAll('.gallery-item').length;
+                if (img && img.src) {
+                    openImageModal(img.src, subject, index, total);
+                }
+            }
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTemplates();
+            loadProjects();
+            checkComfyUIStatus();
+            initFunctionCards();
+            initCFGSlider();
+            initViewToggle();
+            
+            // 定期检查状态
+            setInterval(checkComfyUIStatus, 10000);
+        });
+
+        // 加载模板预览
+        async function loadTemplates() {
+            try {
+                const res = await fetch('/api/templates');
+                const data = await res.json();
+                
+                // 渲染角色模板
+                const charHtml = Object.entries(data.characters || {}).map(([name, desc]) => `
+                    <div class="p-2 mb-2" style="background: rgba(99,102,241,0.1); border-radius: 8px;">
+                        <div class="fw-bold">${name}</div>
+                        <div class="help-text text-truncate">${desc}</div>
+                    </div>
+                `).join('');
+                document.getElementById('characterTemplates').innerHTML = charHtml || '<div class="text-secondary">暂无角色模板</div>';
+            } catch (e) {
+                console.error('Failed to load templates:', e);
+            }
+        }
+
+        // 加载项目列表
+        async function loadProjects() {
+            try {
+                const res = await fetch('/api/projects');
+                const projects = await res.json();
+                
+                if (projects.length === 0) {
+                    document.getElementById('projectList').innerHTML = `
+                        <div class="text-center text-secondary py-4">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                            <div class="mt-2">暂无项目</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const html = projects.map(p => `
+                    <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="loadProject('${p.id}')">
+                        <div>
+                            <div class="fw-bold">${p.name}</div>
+                            <div class="help-text">${p.description || '无描述'}</div>
+                        </div>
+                        <span class="badge ${getStatusBadge(p.status)}">${p.status}</span>
+                    </a>
+                `).join('');
+                document.getElementById('projectList').innerHTML = html;
+            } catch (e) {
+                console.error('Failed to load projects:', e);
+            }
+        }
+
+        // 创建项目
+        async function createProject() {
+            const name = prompt('项目名称:', `项目_${Date.now()}`);
+            if (!name) return;
+            
+            const description = document.getElementById('description').value || '';
+            
+            try {
+                const res = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, description})
+                });
+                const data = await res.json();
+                currentProject = data;
+                addLog(`项目已创建: ${name}`);
+                loadProjects();
+            } catch (e) {
+                console.error('Failed to create project:', e);
+                addLog('创建项目失败');
+            }
+        }
+
+        // 加载项目
+        async function loadProject(projectId) {
+            try {
+                const res = await fetch(`/api/projects/${projectId}`);
+                currentProject = await res.json();
+                updatePreviewFromProject(currentProject);
+                addLog(`已加载项目: ${currentProject.name}`);
+            } catch (e) {
+                console.error('Failed to load project:', e);
+            }
+        }
+
+        // 更新预览
+        function updatePreviewFromProject(project) {
+            // 更新定妆照 - 按角色分组显示
+            if (project.costumes && project.costumes.length > 0) {
+                // 按角色分组
+                const grouped = {};
+                project.costumes.forEach((c, i) => {
+                    const subject = c.subject || 'default';
+                    if (!grouped[subject]) grouped[subject] = [];
+                    grouped[subject].push(c);
+                });
+
+                let html = '';
+                Object.entries(grouped).forEach(([subject, photos]) => {
+                    html += `<div class="mb-3">
+                        <div class="fw-bold text-primary mb-2">
+                            <i class="bi bi-person"></i> ${subject}
+                            <span class="text-muted" style="font-size: 0.8rem;">(${photos.length}张)</span>
+                        </div>
+                        <div class="image-gallery">
+                    `;
+                    photos.forEach((c, i) => {
+                        const imgSrc = c.url || '/api/output/' + (c.filepath || '').replace('/home/evynlau/work/ComfyUI/output/', '');
+                        const isSelected = i === 0 && subject === Object.keys(grouped)[0];
+                        html += `
+                            <div class="gallery-item ${isSelected ? 'selected' : ''}"
+                                 data-subject="${subject}" data-index="${i}"
+                                 onclick="selectCostume(this, '${subject}', ${i})">
+                                <img src="${imgSrc}" alt="${subject} variant ${i+1}">
+                                <div class="overlay">${subject} ${i+1}</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div></div>';
+                });
+                document.getElementById('previewCostume').innerHTML = html;
+                document.getElementById('statusCostume').className = 'status-badge status-completed';
+                document.getElementById('statusCostume').textContent = '已完成';
+            }
+
+            // 更新分镜图
+            if (project.storyboards && project.storyboards.length > 0) {
+                const html = project.storyboards.map((s, i) => `
+                    <div class="shot-item">
+                        <img src="${s.url || '/api/output/' + (s.filepath || '').replace('/home/evynlau/work/ComfyUI/output/', '')}" alt="Shot ${i+1}">
+                        <div class="fw-bold">${s.name || '分镜 ' + (i+1)}</div>
+                        <div class="help-text" style="font-size: 0.75rem;">${s.prompt?.substring(0, 50)}...</div>
+                    </div>
+                `).join('');
+                document.getElementById('previewStoryboard').innerHTML = html;
+                document.getElementById('statusStoryboard').className = 'status-badge status-completed';
+                document.getElementById('statusStoryboard').textContent = '已完成';
+            }
+
+            // 更新视频
+            if (project.videos && project.videos.length > 0) {
+                const html = project.videos.map(v => `
+                    <div class="col-md-4">
+                        <video src="${v.url || '/api/output/' + (v.filepath || '').replace('/home/evynlau/work/ComfyUI/output/', '')}" controls style="width:100%; border-radius:8px;"></video>
+                        <div class="mt-2 text-center">${v.shot_num || ''}</div>
+                    </div>
+                `).join('');
+                document.getElementById('previewVideo').innerHTML = html;
+            }
+        }
+
+        // 检查 ComfyUI 状态
+        async function checkComfyUIStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                
+                const statusEl = document.getElementById('comfyuiStatus');
+                if (data.comfyui.status === 'connected') {
+                    statusEl.className = 'status-badge status-connected';
+                    statusEl.innerHTML = '<i class="bi bi-cloud-check"></i> ComfyUI 已连接';
+                } else {
+                    statusEl.className = 'status-badge status-disconnected';
+                    statusEl.innerHTML = '<i class="bi bi-cloud"></i> ComfyUI 未连接';
+                }
+                
+                document.getElementById('queueRunning').textContent = data.queue.running;
+                document.getElementById('queuePending').textContent = data.queue.pending;
+            } catch (e) {
+                console.error('Failed to check ComfyUI status:', e);
+            }
+        }
+
+        // 初始化功能卡片
+        function initFunctionCards() {
+            document.querySelectorAll('.function-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.function-card').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedFunction = this.dataset.function;
+                });
+            });
+        }
+
+        // 初始化 CFG 滑块
+        function initCFGSlider() {
+            const slider = document.getElementById('cfg');
+            const value = document.getElementById('cfgValue');
+            slider.addEventListener('input', function() {
+                value.textContent = parseFloat(this.value).toFixed(1);
+            });
+        }
+
+        // 初始化视图切换
+        function initViewToggle() {
+            document.querySelectorAll('[data-view]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const view = this.dataset.view;
+                    document.getElementById('viewPipeline').style.display = view === 'pipeline' ? 'block' : 'none';
+                    document.getElementById('viewGallery').style.display = view === 'gallery' ? 'block' : 'none';
+                });
+            });
+        }
+
+        // 选择定妆照
+        function selectCostume(el, subject, index) {
+            // 取消同组其他选中状态
+            el.parentElement.querySelectorAll('.gallery-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            el.classList.add('selected');
+
+            // 保存选择到项目配置
+            fetch(`/api/projects/${currentProject?.id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    selected_costume: { subject, index }
+                })
+            });
+        }
+
+        // 选择项目
+        function selectItem(el) {
+            el.parentElement.querySelectorAll('.gallery-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        // 获取状态徽章类
+        function getStatusBadge(status) {
+            const map = {
+                'draft': 'bg-secondary',
+                'running': 'bg-warning',
+                'completed': 'bg-success',
+                'error': 'bg-danger'
+            };
+            return map[status] || 'bg-secondary';
+        }
+
+        // 添加日志
+        function addLog(message) {
+            const log = document.getElementById('logContent');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML += `\n[${time}] ${message}`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // 执行生成
+        document.getElementById('btnExecute').addEventListener('click', async function() {
+            const description = document.getElementById('description').value.trim();
+            if (!description) {
+                alert('请输入故事描述');
+                return;
+            }
+            
+            const params = {
+                description,
+                num_costumes: parseInt(document.getElementById('numCostumes').value),
+                num_shots: parseInt(document.getElementById('numShots').value),
+                use_reference: document.getElementById('useReference').checked,
+                seed: parseInt(document.getElementById('seed').value),
+                length: parseInt(document.getElementById('length').value),
+                steps: parseInt(document.getElementById('steps').value),
+                cfg: parseFloat(document.getElementById('cfg').value)
+            };
+            
+            // 创建项目
+            let projectId = currentProject?.id;
+            if (!projectId) {
+                const name = `项目_${Date.now()}`;
+                const res = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name, description, params})
+                });
+                const data = await res.json();
+                projectId = data.id;
+                currentProject = data;
+                addLog(`项目已创建: ${name}`);
+            }
+            
+            // 开始生成
+            addLog(`开始执行: ${selectedFunction}`);
+            updateStatus('running');
+            
+            try {
+                const res = await fetch(`/api/projects/${projectId}/execute`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({function: selectedFunction, params})
+                });
+                
+                if (res.ok) {
+                    addLog('生成任务已提交...');
+                    startPolling(projectId);
+                } else {
+                    addLog('提交失败');
+                    updateStatus('error');
+                }
+            } catch (e) {
+                console.error('Execute error:', e);
+                addLog('执行出错: ' + e.message);
+                updateStatus('error');
+            }
+        });
+
+        // 更新状态显示
+        function updateStatus(status) {
+            const map = {
+                'running': ['status-running', '运行中'],
+                'completed': ['status-completed', '已完成'],
+                'error': ['status-disconnected', '错误']
+            };
+            
+            if (['costume', 'storyboard', 'video'].includes(status)) {
+                const el = document.getElementById('status' + status.charAt(0).toUpperCase() + status.slice(1));
+                if (el) {
+                    el.className = 'status-badge status-running';
+                    el.textContent = '生成中...';
+                }
+            }
+        }
+
+        // 轮询项目状态
+        function startPolling(projectId) {
+            if (pollingInterval) clearInterval(pollingInterval);
+            
+            pollingInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/projects/${projectId}`);
+                    const project = await res.json();
+                    
+                    // 更新预览
+                    updatePreviewFromProject(project);
+                    
+                    // 检查是否完成
+                    if (project.status === 'completed') {
+                        clearInterval(pollingInterval);
+                        addLog('生成完成!');
+                    } else if (project.status === 'error') {
+                        clearInterval(pollingInterval);
+                        addLog('生成错误: ' + (project.error || '未知错误'));
+                    }
+                    
+                    // 更新队列状态
+                    checkComfyUIStatus();
+                } catch (e) {
+                    console.error('Polling error:', e);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

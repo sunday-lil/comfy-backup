@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project outputs (keep structure, ignore generated content)
+output/videos/
+output/web_projects/
+output/costume_photos/
+output/storyboards/
+projects/
+
+# Logs
+*.log
+monitor_log.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credentials (should never be committed, but just in case)
+*.pem
+*.key
+.env
+output/test/

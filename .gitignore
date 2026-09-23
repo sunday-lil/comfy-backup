@@ -1,0 +1,12 @@
+# ComfyUI 便携版（60GB，不入库）
+ComfyUI_windows_portable/
+
+# Python
+__pycache__/
+*.pyc
+
+# 生成物缓存与日志
+comfyui_workflows-main/output/
+comfyui_workflows-main/setup/logs/
+comfyui_workflows-main/projects/*/videos/*.mp4
+comfyui_workflows-main/projects/*/audio/*.wav
